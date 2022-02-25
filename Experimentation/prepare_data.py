@@ -3,8 +3,7 @@ import yfinance as yf
 import joblib
 import pandas as pd
 
-data = yf.download("ITC.NS")
-
+data = yf.download("ITC.NS", start = "2016-01-01")
 OHLCAV = ["Open","High","Low","Close","Adj Close", "Volume"]
 
 data["Close-Open"] = data["Close"] - data["Open"]
@@ -37,49 +36,48 @@ data = pd.concat([data, onehot_quarter], axis = 1)
 
 DATEDAYMONTH = ["Date", "DayOTW", "Day","Month", "Week", "Quarter"]
 
-# data['SMA50'] = data['Close'].rolling(50).mean()
-# data['SMA100'] = data['Close'].rolling(100).mean()
-# data['SMA200'] = data['Close'].rolling(200).mean()
+data['SMA50'] = data['Close'].rolling(50).mean()
+data['SMA100'] = data['Close'].rolling(100).mean()
+data['SMA200'] = data['Close'].rolling(200).mean()
 
-# data['SMM50'] = data['Close'].rolling(50).max()
-# data['SMM100'] = data['Close'].rolling(100).max()
-# data['SMM200'] = data['Close'].rolling(200).max()
+data['SMM50'] = data['Close'].rolling(50).max()
+data['SMM100'] = data['Close'].rolling(100).max()
+data['SMM200'] = data['Close'].rolling(200).max()
 
-# data['SMm50'] = data['Close'].rolling(50).min()
-# data['SMm100'] = data['Close'].rolling(100).min()
-# data['SMm200'] = data['Close'].rolling(200).min()
+data['SMm50'] = data['Close'].rolling(50).min()
+data['SMm100'] = data['Close'].rolling(100).min()
+data['SMm200'] = data['Close'].rolling(200).min()
 
-# data["SMA50Diff"] = 100*(data["Close"] - data["SMA50"])/data["SMA50"]
-# data["SMA100Diff"] = 100*(data["Close"] - data["SMA100"])/data["SMA100"]
-# data["SMA200Diff"] = 100*(data["Close"] - data["SMA200"])/data["SMA200"]
+data["SMA50Diff"] = 100*(data["Close"] - data["SMA50"])/data["SMA50"]
+data["SMA100Diff"] = 100*(data["Close"] - data["SMA100"])/data["SMA100"]
+data["SMA200Diff"] = 100*(data["Close"] - data["SMA200"])/data["SMA200"]
 
-# data["SMM50Diff"] = 100*(data["Close"] - data["SMM50"])/data["SMM50"]
-# data["SMM100Diff"] = 100*(data["Close"] - data["SMM100"])/data["SMM100"]
-# data["SMM200Diff"] = 100*(data["Close"] - data["SMM200"])/data["SMM200"]
+data["SMM50Diff"] = 100*(data["Close"] - data["SMM50"])/data["SMM50"]
+data["SMM100Diff"] = 100*(data["Close"] - data["SMM100"])/data["SMM100"]
+data["SMM200Diff"] = 100*(data["Close"] - data["SMM200"])/data["SMM200"]
 
-# data["SMm50Diff"] = 100*(data["Close"] - data["SMm50"])/data["SMm50"]
-# data["SMm100Diff"] = 100*(data["Close"] - data["SMm100"])/data["SMm100"]
-# data["SMm200Diff"] = 100*(data["Close"] - data["SMm200"])/data["SMm200"]
+data["SMm50Diff"] = 100*(data["Close"] - data["SMm50"])/data["SMm50"]
+data["SMm100Diff"] = 100*(data["Close"] - data["SMm100"])/data["SMm100"]
+data["SMm200Diff"] = 100*(data["Close"] - data["SMm200"])/data["SMm200"]
 
 MovingAvgMaxMin = ["SMA50","SMA100","SMA200","SMM50","SMM100","SMM200","SMm50","SMm100","SMm200"]
 
-n_days = 10
+n_days = 3
 for i in range(2,n_days+1):
     data["Past"+str(i)+"DaysA"] = data["Today"].rolling(i).mean()
     data["Past"+str(i)+"DaysM"] = data["Today"].rolling(i).max()
     data["Past"+str(i)+"Daysm"] = data["Today"].rolling(i).min()
 
-print(data["Past3DaysM"])
-
 # data = data.drop(MovingAvgMaxMin,1)
-data = data.drop(OHLCAV, axis = 1)
+# data = data.drop(OHLCAV, axis = 1)
 data = data.drop(DATEDAYMONTH, axis = 1)
 
-n_days = 1
+n_days = 2
 print(data.columns)
 for i in range(1,n_days+1):
     data["PrevTarget_"+str(i)+"lag"] = data["Target"].shift(i).copy()
     data["Volatility_"+str(i)+"lag"] = data["Volatility"].shift(i).copy()
     data["Percent_Change_"+str(i)+"lag"] = data["Percent_Change"].shift(i).copy()
+
 
 joblib.dump(data, "Experimentation/joblib/data.joblib")
