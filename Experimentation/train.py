@@ -1,72 +1,71 @@
+from re import X
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LSTM
+from sklearn.preprocessing import MinMaxScaler
 import joblib
 import numpy as np
+from sklearn.metrics import r2_score
+import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score, f1_score, precision_score
-from sklearn.svm import SVC
-from xgboost import XGBClassifier
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
-data = joblib.load("Experimentation/joblib/data.joblib")
-X = data.drop(["Target"],axis=1).iloc[200:-200,:]
-y = data["Target"].iloc[200:-200]
+data = joblib.load("joblib/data.joblib")
+X = data.drop(["Target"],1).iloc[:-1,:]["Close"]
+y = data["Target"][:-1]
 
-# data = data.sample(data.shape[0],replace=False, random_state=42)
-# split = int(X.shape[0]*0.7)
-# X_train, X_test, y_train, y_test = X.iloc[:split,:], X.iloc[split:,:], y.iloc[:split], y.iloc[split:]
+split = int(0.8*data.shape[0])
+X_train, X_test = X[:split], X.iloc[split:]
+y_train, y_test = y[:split], y[split:]
 
-attributes = list(X.columns)
-attributes.remove("Close-Open")
-# print("\n",attributes)
+scaler=MinMaxScaler(feature_range=(0,1))
+X_train=scaler.fit_transform(np.array(X_train).reshape(-1,1))
+X_test=scaler.fit_transform(np.array(X_test).reshape(-1,1))
+y_train=scaler.fit_transform(np.array(y_train).reshape(-1,1))
+y_test=scaler.fit_transform(np.array(y_test).reshape(-1,1))
 
-# model = LogisticRegression()
-# params = {'tol':[1e-6,1e-5,1e-6,1e-4,1e-3,1e-2,1,10], 'C':[1e-5,1e-4,1e-3,1e-2,1e-1,1,10,100,1000]}
+def create_model():
+    model=Sequential()
+    model.add(LSTM(50,return_sequences=True,input_shape=(X_train.shape[0],1)))
+    model.add(LSTM(50,return_sequences=True))
+    model.add(LSTM(50,return_sequences=True))
+    model.add(LSTM(50))
+    model.add(Dense(1))
+    model.compile(loss='mean_squared_error',optimizer='adam')
+    return model
 
-# model = RandomForestClassifier()
-# params = {'n_estimators': list(range(50,200,10)),'max_depth': list(range(2,12)), 'min_samples_split':list(range(2,200,5)), 'min_samples_leaf': list(range(1,300,5))}
 
-# model = GradientBoostingClassifier(max_depth = 1)
-# model = GaussianNB()
+model = create_model()
 
-# model = SVC()
-# params = {'C':[1e-5,1e-4,1e-3,1e-2,1e-1,1,10,100,1000], 'degree':list(range(2,4))}
+model.fit(X_train, y_train, epochs=80,validation_data=(X_test,y_test), verbose=1)
 
-model = XGBClassifier()
-params = {
-            'eta': [x/100 for x in list(range(1,20))],
-            'n_estimators': list(range(50,200,10)),
-            'max_depth': list(range(2,12)),
-            'max_leaf_nodes':list(range(2,200,5)),
-            'min_child_weight': list(range(1,300,5)),
-            'colsample_bytree' : [x/10 for x in list(range(5,11))],
-            'scale_pos_weight': [float(x)/10 for x in range(1,21)]
-            }
+train_predict=model.predict(X_train)
+test_predict=model.predict(X_test)
 
-GS = RandomizedSearchCV(model,params,scoring = 'precision', n_iter=50)
-model = GS
+train_predict=scaler.inverse_transform(train_predict)
+test_predict=scaler.inverse_transform(test_predict)
 
-model.fit(X[attributes],y)
+X_train=scaler.inverse_transform(X_train)
+X_test=scaler.inverse_transform(X_test)
+y_train=scaler.inverse_transform(y_train)
+y_test=scaler.inverse_transform(y_test)
 
-print(model.best_params_)
-print(model.best_score_)
+print(r2_score(train_predict,y_train))
+print(r2_score(test_predict,y_test))
 
-#Predict All 1's
-allones = np.zeros((X.shape[0])) + 1
-score = precision_score(y,allones)
-print("\nTradeEveryday Prediction:",score)
+y_rec = np.concatenate([y_train,y_test],axis = 0)
+y_pred = np.concatenate([train_predict, test_predict], axis= 0)
+X_rec = np.concatenate([X_train,X_test],axis = 0)
 
-#Predict opposite of today
-opposite = X["Close-Open"].apply(lambda x: 0 if x>0 else 1)
-score = precision_score(y, opposite)
-print("\nOpposite Prediction", score)
+final_data = pd.DataFrame(index = data.iloc[:-1,:].index)
+final_data["Close"] = X_rec
+final_data["Pred"] = y_pred
+final_data["Target"] = y_rec
 
-#Predict same as today
-same = X["Close-Open"].apply(lambda x: 1 if x>0 else 0)
-score = precision_score(y, same)
-print("\nSame Prediction", score)
+plt.plot(test_predict)
+plt.savefig("pred.jpg")
 
-joblib.dump(model,"Experimentation/joblib/model.joblib")
+plt.plot(y_test)
+plt.savefig("test.jpg")
 
-print("\n")
+model.save_weights('save/')
+joblib.dump(scaler,"joblib/scaler.joblib")
