@@ -1,10 +1,18 @@
 import joblib
 import matplotlib.pyplot as plt
-data = joblib.load("Experimentation/joblib/data.joblib")
+results = joblib.load("joblib/train_results.joblib")
 
-data[["Close","SMA50","SMA100","SMA200"]].plot()
-plt.savefig('Experimentation/plots/MovingAverages.png')
-
+plt.plot(results["Target"][-365:])
+plt.plot(results["Pred"][-365:])
+plt.savefig("plots/1yearpredictions.jpg")
 plt.close()
-data[["Close","SMM50","SMM100","SMM200","SMm50","SMm100","SMm200"]].plot()
-plt.savefig('Experimentation/plots/MovingMaximum.png')
+
+plt.plot(results["Target"][-90:])
+plt.plot(results["Pred"][-90:])
+plt.savefig("plots/3monthspredictions.jpg")
+plt.close()
+
+plt.plot(results["Target"][-30:])
+plt.plot(results["Pred"][-30:])
+plt.savefig("plots/30dayspredictions.jpg")
+plt.close()
