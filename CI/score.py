@@ -1,3 +1,4 @@
+from tracemalloc import start
 import joblib
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, precision_score, r2_score
@@ -5,41 +6,78 @@ import yfinance as yf
 from tensorflow import keras
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Densew  
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import LSTM
+import json
 
-unseen_data = yf.download("ITC.NS", start = "2022-01-01")
+class Score():
+    def load(self, stock_ticker, start_date):
+        unseen_data = yf.download(stock_ticker, start_date)
+        return unseen_data
 
-def create_model():
-    model=Sequential()
-    model.add(LSTM(100,return_sequences=True,input_shape=(unseen_data.shape[0],1)))
-    model.add(LSTM(100, return_sequences = True))
-    model.add(LSTM(100))
-    model.add(Dense(1))
-    model.compile(loss='mean_squared_error',optimizer='adam')
-    return model
+    def create_model(self, input_size):
+        model=Sequential()
+        model.add(LSTM(100,return_sequences=True,input_shape=(input_size,1)))
+        model.add(LSTM(100, return_sequences = True))
+        model.add(LSTM(100))
+        model.add(Dense(1))
+        model.compile(loss='mean_squared_error',optimizer='adam')
+        return model
 
-model = create_model()
-model.load_weights('save/')
+    def load_model_weights(self, model_weights_path, input_size):
+        model = self.create_model(input_size)
+        model.load_weights(model_weights_path)
+        return model
 
-unseen_X = unseen_data["Close"]
-unseen_y = unseen_data["Close"].shift(-1)[:-1]
+    def test_data(self, unseen_data):
+        unseen_X = unseen_data["Close"]
+        unseen_y = unseen_data["Close"].shift(-1)[:-1]
+        return unseen_X, unseen_y
 
-scaler=joblib.load("joblib/scaler.joblib")
-unseen_X = scaler.transform(np.array(unseen_X).reshape(-1,1))
-# unseen_y = scaler.transform(np.array(unseen_data["Close"].shift(-1)[:-1]).reshape(-1,1))
+    def load_scaler(self, scaler_path):
+        scaler=joblib.load(scaler_path)
+        return scaler
 
-prediction = model.predict(unseen_X)
-pred_for_tomorrow = scaler.inverse_transform(prediction[-1:])
+    def scale(self, unseen_X):
+        unseen_X = self.load_scaler(scaler_path).transform(np.array(unseen_X).reshape(-1,1))
+        return unseen_X
 
-pred = prediction[:-1]
-pred= scaler.inverse_transform(pred)
-# unseen_y = scaler.inverse_transform(unseen_y)
+    def predict_and_invert(self, model, unseen_X):
+        prediction = model.predict(unseen_X)
+        scaler = self.load_scaler(scaler_path)
+        pred = prediction[:-1]
+        pred= scaler.inverse_transform(pred)
+        return pred
 
-unseen_data["OpenTom"] = unseen_data["Open"].shift(-1)
+    def combine_results(self, unseen_data, unseen_y, pred):
+        unseen_data["OpenTom"] = unseen_data["Open"].shift(-1)
+        unseen_data = unseen_data.iloc[:-1,:]
+        unseen_data["y"] = unseen_y
+        unseen_data["Pred"] = pred
+        return unseen_data
+    
+    def dump(self, unseen_data, output_data_path):
+        joblib.dump(unseen_data, output_data_path)
 
-unseen_data = unseen_data.iloc[:-1,:]
-unseen_data["y"] = unseen_y
-unseen_data["Pred"] = pred
-joblib.dump(unseen_data, "jolib/unseen.joblib")
+    def __init__(self, stock_ticker, start_date, model_weights_path, scaler_path, output_data_path):
+        unseen_data = self.load(stock_ticker, start_date)
+        model = self.load_model_weights(model_weights_path, unseen_data.shape[0])
+        unseen_X, unseen_y = self.test_data(unseen_data)
+        unseen_X = self.scale(unseen_X)
+        pred = self.predict_and_invert(model, unseen_X)
+        unseen_data = self.combine_results(unseen_data, unseen_y, pred)
+        self.dump(unseen_data, output_data_path)
+
+
+if __name__ == "__main__":
+    f = open('config/params.json', )
+    params = json.load(f)
+
+    stock_ticker = params["score"]["stock_ticker"]
+    start_date = params["score"]["start_date"]
+    model_weights_path = params["score"]["model_weights_path"]
+    scaler_path = params["score"]["scaler_path"]
+    output_data_path = params["score"]["output_data_path"]
+    Score(stock_ticker, start_date, model_weights_path, scaler_path, output_data_path)
+
 

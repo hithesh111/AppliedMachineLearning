@@ -1,0 +1,24 @@
+{
+    "prepare_data":{
+        "stock_ticker": "ITC.NS",
+        "start_date" :"2020-01-01",
+        "end_date" : "2021-12-31",
+        "data_path": "joblib/data.joblib"
+  },
+    "train":{
+        "data_path": "joblib/data.joblib",
+        "output_scaler_path": "joblib/scaler.joblib",
+        "output_model_path": "save/",
+        "output_data_path": "joblib/train_results.joblib"
+    },
+    "score":{
+        "stock_ticker": "ITC.NS",
+        "start_date": "2022-01-01",
+        "model_weights_path": "save/",
+        "scaler_path": "joblib/scaler.joblib",
+        "output_data_path": "joblib/unseen.joblib"
+    },
+    "evaluate":{
+        "unseen_data_path": "joblib/unseen.joblib"
+    }
+}
