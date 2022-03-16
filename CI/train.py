@@ -10,6 +10,7 @@ from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 import pandas as pd
 import json
+import logging
 
 class Training():
     def DataSplit(self,X,y):
@@ -50,7 +51,7 @@ class Training():
         return X_train, X_test, y_train, y_test, train_predict, test_predict
 
     def CrossValScore(self,train_predict, y_train, test_predict, y_test):
-        return r2_score(train_predict,y_train), r2_score(test_predict,y_test)
+            return r2_score(train_predict,y_train), r2_score(test_predict,y_test)
 
     def CombineResults(self,data,X_train, X_test, y_train, y_test, train_predict, test_predict):
         y_rec = np.concatenate([y_train,y_test],axis = 0)
@@ -71,6 +72,7 @@ class Training():
         X_train, X_test, y_train, y_test = self.Fit_Scaler(X_train, X_test, y_train, y_test, scaler)
         model = self.create_model(X_train.shape[0])      
         model, train_pred, test_pred = self.train_validate_predict(X_train, X_test, y_train, y_test, model)
+        logging.info("Model traning complete")
         X_train, X_test, y_train, y_test, train_pred, test_pred = self.ScalerInvert(scaler, X_train, X_test, y_train, y_test, train_pred, test_pred)
         train_score, test_score = self.CrossValScore(train_pred, y_train, test_pred, y_test)
         results = self.CombineResults(data, X_train, X_test, y_train, y_test, train_pred, test_pred)
@@ -80,9 +82,11 @@ class Training():
         self.results = results
         self.train_score = train_score
         self.test_score = test_score
+        self.model = model
+        self.scaler = scaler
 
 if __name__ == "__main__":
-    f = open('config/params.json', )
+    f = open('config/params.json')
     params = json.load(f)
 
     data_path = params["train"]["data_path"]

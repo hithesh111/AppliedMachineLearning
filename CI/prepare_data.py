@@ -3,11 +3,6 @@ import joblib
 import pandas as pd
 import json
 
-stock_ticker = "ITC.NS"
-start_date = "2020-01-01"
-end_date = "2021-12-31"
-data_path = "joblib/data.joblib"
-
 class Prepare():
     def load(self, stock_ticker, start_date, end_date):
         data = yf.download(stock_ticker, start_date, end_date)
@@ -17,7 +12,7 @@ class Prepare():
         data = data[["Close"]]
         data["Target"] = data["Close"].shift(-1)
         return data
-        
+
     def data_dump(self, data, data_path):
         joblib.dump(data, data_path)
 
@@ -27,11 +22,12 @@ class Prepare():
         self.data_dump(data, data_path)
 
 if __name__ == "__main__":
-    f = open('config/params.json', )
+    f = open('config/params.json')
     params = json.load(f)
 
     stock_ticker = params["prepare_data"]["stock_ticker"]
     start_date = params["prepare_data"]["start_date"]
     end_date = params["prepare_data"]["end_date"]
     data_path = params["prepare_data"]["data_path"]
+
     Prepare(stock_ticker, start_date, end_date, data_path)

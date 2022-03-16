@@ -9,6 +9,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import LSTM
 import json
+import logging
 
 class Score():
     def load(self, stock_ticker, start_date):
@@ -38,11 +39,11 @@ class Score():
         scaler=joblib.load(scaler_path)
         return scaler
 
-    def scale(self, unseen_X):
+    def scale(self, unseen_X, scaler_path):
         unseen_X = self.load_scaler(scaler_path).transform(np.array(unseen_X).reshape(-1,1))
         return unseen_X
 
-    def predict_and_invert(self, model, unseen_X):
+    def predict_and_invert(self, model, unseen_X, scaler_path):
         prediction = model.predict(unseen_X)
         scaler = self.load_scaler(scaler_path)
         pred = prediction[:-1]
@@ -63,14 +64,16 @@ class Score():
         unseen_data = self.load(stock_ticker, start_date)
         model = self.load_model_weights(model_weights_path, unseen_data.shape[0])
         unseen_X, unseen_y = self.test_data(unseen_data)
-        unseen_X = self.scale(unseen_X)
-        pred = self.predict_and_invert(model, unseen_X)
+        scaler = self.load_scaler(scaler_path)
+        unseen_X = self.scale(unseen_X,scaler_path)
+        pred = self.predict_and_invert(model, unseen_X, scaler_path)
         unseen_data = self.combine_results(unseen_data, unseen_y, pred)
+        logging.info("Predictions made successfully")
         self.dump(unseen_data, output_data_path)
 
 
 if __name__ == "__main__":
-    f = open('config/params.json', )
+    f = open('config/params.json')
     params = json.load(f)
 
     stock_ticker = params["score"]["stock_ticker"]
