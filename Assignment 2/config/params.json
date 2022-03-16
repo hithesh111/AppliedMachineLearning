@@ -20,5 +20,9 @@
     },
     "evaluate":{
         "unseen_data_path": "joblib/unseen.joblib"
+    },
+    "explore_data":{
+        "score_data_path":"joblib/unseen.joblib"
     }
+
 }
