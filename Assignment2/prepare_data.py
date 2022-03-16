@@ -5,15 +5,18 @@ import json
 
 class Prepare():
     def load(self, stock_ticker, start_date, end_date):
+        #Load data from yfinance
         data = yf.download(stock_ticker, start_date, end_date)
         return data
     
     def preprocess(self,data):
+        #Get the features and target variable
         data = data[["Close"]]
         data["Target"] = data["Close"].shift(-1)
         return data
 
     def data_dump(self, data, data_path):
+        #Save the data using joblib
         joblib.dump(data, data_path)
 
     def __init__(self, stock_ticker, start_date, end_date, data_path):

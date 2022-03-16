@@ -13,10 +13,12 @@ import logging
 
 class Score():
     def load(self, stock_ticker, start_date):
+        #load unseen_data
         unseen_data = yf.download(stock_ticker, start_date)
         return unseen_data
 
     def create_model(self, input_size):
+        #create an empty LSTM model
         model=Sequential()
         model.add(LSTM(100,return_sequences=True,input_shape=(input_size,1)))
         model.add(LSTM(100, return_sequences = True))
@@ -26,24 +28,29 @@ class Score():
         return model
 
     def load_model_weights(self, model_weights_path, input_size):
+        #Load weights saved from training
         model = self.create_model(input_size)
         model.load_weights(model_weights_path)
         return model
 
     def test_data(self, unseen_data):
+        # Split the data into attribute
         unseen_X = unseen_data["Close"]
         unseen_y = unseen_data["Close"].shift(-1)[:-1]
         return unseen_X, unseen_y
 
     def load_scaler(self, scaler_path):
+        #load scaler saved from training
         scaler=joblib.load(scaler_path)
         return scaler
 
     def scale(self, unseen_X, scaler_path):
+        #Scale the attributes
         unseen_X = self.load_scaler(scaler_path).transform(np.array(unseen_X).reshape(-1,1))
         return unseen_X
 
     def predict_and_invert(self, model, unseen_X, scaler_path):
+        #Make predictions and invert the scaled quantities
         prediction = model.predict(unseen_X)
         scaler = self.load_scaler(scaler_path)
         pred = prediction[:-1]
@@ -51,6 +58,7 @@ class Score():
         return pred
 
     def combine_results(self, unseen_data, unseen_y, pred):
+        #Combine the predictions to use for evaluation
         unseen_data["OpenTom"] = unseen_data["Open"].shift(-1)
         unseen_data = unseen_data.iloc[:-1,:]
         unseen_data["y"] = unseen_y

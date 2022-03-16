@@ -4,20 +4,24 @@ import json
 
 class Evaluate():
     def load(self, unseen_data_path):
+        #load saved data from predictions stored
         unseen_data = joblib.load(unseen_data_path)
         return unseen_data
 
     def get_pred_for_tomorrow(self, unseen_data):
+        #Get tomorrow's prediction of close price
         today_date = unseen_data.index[-1]  
         tom_pred = unseen_data.loc[unseen_data.index[-1],"Pred"]
         return today_date, tom_pred
 
     def add_binary_target(self, unseen_data):
+        # Change the variables to binary (whether Close > Open)
         unseen_data["Target"] = (unseen_data["y"] - unseen_data["OpenTom"]).apply(lambda x: 1 if x>0 else 0)
         unseen_data["Target_Pred"] = (unseen_data["Pred"] - unseen_data["OpenTom"]).apply(lambda x: 1 if x>0 else 0)
         return unseen_data
     
     def error_metrics(self, unseen_data):
+        #Get error metrics for the LSTM predictions and corresponding binary prediction
         r2score = r2_score(unseen_data["y"],unseen_data["Pred"])
         precision = precision_score(unseen_data["Target"],unseen_data["Target_Pred"])
         recall = recall_score(unseen_data["Target"],unseen_data["Target_Pred"])
@@ -25,6 +29,7 @@ class Evaluate():
         return r2score, precision, recall, f1score
 
     def total_profit(self, unseen_data):
+        #Find the total profit from the trades taken
         taken_trades = unseen_data[unseen_data["Target_Pred"]==1]
         self.n_trades = taken_trades.shape[0]
         profit = (taken_trades["Pred"] - taken_trades["OpenTom"]).sum()
