@@ -42,7 +42,7 @@ class Evaluate():
         self.profit = self.total_profit(unseen_data)
 
 if __name__ == "__main__":
-    f = open('config/params.json', )
+    f = open('config/params.json')
     params = json.load(f)
 
     unseen_data_path = params["evaluate"]["unseen_data_path"]
