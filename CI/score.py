@@ -8,6 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import LSTM
+import json
 
 class Score():
     def load(self, stock_ticker, start_date):
@@ -69,11 +70,14 @@ class Score():
 
 
 if __name__ == "__main__":
-    stock_ticker = "ITC.NS"
-    start_date = "2022-01-01"
-    model_weights_path = 'save/'
-    scaler_path = "joblib/scaler.joblib"
-    output_data_path = "joblib/unseen.joblib"
+    f = open('config/params.json', )
+    params = json.load(f)
+
+    stock_ticker = params["score"]["stock_ticker"]
+    start_date = params["score"]["start_date"]
+    model_weights_path = params["score"]["model_weights_path"]
+    scaler_path = params["score"]["scaler_path"]
+    output_data_path = params["score"]["output_data_path"]
     Score(stock_ticker, start_date, model_weights_path, scaler_path, output_data_path)
 
 

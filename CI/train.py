@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 import pandas as pd
+import json
 
 class Training():
     def DataSplit(self,X,y):
@@ -81,10 +82,13 @@ class Training():
         self.test_score = test_score
 
 if __name__ == "__main__":
-    data_path = "joblib/data.joblib"
-    output_scaler_path = "joblib/scaler.joblib"
-    output_model_path = "save/"
-    output_data_path = "joblib/train_results.joblib"
+    f = open('config/params.json', )
+    params = json.load(f)
+
+    data_path = params["train"]["data_path"]
+    output_scaler_path = params["train"]["output_scaler_path"]
+    output_model_path = params["train"]["output_model_path"]
+    output_data_path = params["train"]["output_data_path"]
 
     train = Training(data_path, output_scaler_path, output_model_path, output_data_path)
     results, train_score, test_score = train.results, train.train_score, train.test_score

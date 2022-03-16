@@ -1,5 +1,6 @@
 from sklearn.metrics import r2_score, precision_score, recall_score, f1_score
 import joblib
+import json
 
 class Evaluate():
     def load(self, unseen_data_path):
@@ -41,7 +42,10 @@ class Evaluate():
         self.profit = self.total_profit(unseen_data)
 
 if __name__ == "__main__":
-    unseen_data_path = 'joblib/unseen.joblib'
+    f = open('config/params.json', )
+    params = json.load(f)
+
+    unseen_data_path = params["evaluate"]["unseen_data_path"]
     evaluate = Evaluate(unseen_data_path)
     
     print("r2_score = {}".format(evaluate.r2score))
