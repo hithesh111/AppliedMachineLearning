@@ -1,18 +1,26 @@
 import joblib
+import json
 import matplotlib.pyplot as plt
-results = joblib.load("joblib/train_results.joblib")
 
-plt.plot(results["Target"][-365:])
-plt.plot(results["Pred"][-365:])
-plt.savefig("plots/1yearpredictions.jpg")
-plt.close()
+class Visualization():
+    def load_data(self, score_data_path):
+        data = joblib.load(score_data_path)
+        return data
+    
+    def plot(self,data):
+        plt.plot(data["y"])
+        plt.plot(data["Pred"])
+        plt.legend(["Actual","Prediction"])
+        plt.savefig("plots/unseen_predictions.png")
+        plt.close()
 
-plt.plot(results["Target"][-90:])
-plt.plot(results["Pred"][-90:])
-plt.savefig("plots/3monthspredictions.jpg")
-plt.close()
+    def __init__(self, score_data_path):
+        data = self.load_data(score_data_path)
+        self.plot(data)
+    
+if __name__ == "__main__":
+    f = open('config/params.json')
+    params = json.load(f)
 
-plt.plot(results["Target"][-30:])
-plt.plot(results["Pred"][-30:])
-plt.savefig("plots/30dayspredictions.jpg")
-plt.close()
+    score_data_path = params["explore_data"]["score_data_path"]
+    Visualization(score_data_path)
