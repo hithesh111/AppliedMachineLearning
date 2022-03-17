@@ -2,7 +2,7 @@ import json
 from prepare_data import Prepare
 from train import Training
 from score import Score
-from evaluate import Evaluate
+from evaluate import Evaluate, Benchmark
 import numpy as np
 
 f = open('config/params.json')
@@ -28,7 +28,7 @@ unseen_data_path = params["evaluate"]["unseen_data_path"]
 
 profits = []
 Prepare(stock_ticker, start_date, end_date, output_data_path)
-n_iterations = 100
+n_iterations = 50
 for i in range(n_iterations):
     Training(input_data_path, output_scaler_path, output_model_path, output_data_path_train)
     Score(stock_ticker, start_date_score, model_weights_path, input_scaler_path, output_data_path_score)
@@ -38,6 +38,8 @@ for i in range(n_iterations):
 no_days = evaluate.n_days
 
 print("\n")
+bm = Benchmark(unseen_data_path)
+print("Trade everyday Benchmark profit = {}".format(bm.benchmark1_profit))
 print("Number of iterations:", n_iterations)
 print("Percentage of iterations in which a profit was taken: ", 100*sum(np.array(profits)>0)/n_iterations)
 print("Mean Stock Price: ", evaluate.mean_price)
