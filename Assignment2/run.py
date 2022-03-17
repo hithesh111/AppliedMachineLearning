@@ -35,5 +35,6 @@ evaluate = Evaluate(unseen_data_path)
 
 print("\n")
 print("Profit Made per stock: ", evaluate.mean_price)
-print("Profit Made per stock: ", evaluate.profit)
+print("Profit Made per stock in a period of {} days = {}".format(evaluate.n_days,evaluate.profit))
+print("Prediction for Tomorrow = {} as on {}".format(evaluate.tom_pred, evaluate.today_date))
 print("\n")
